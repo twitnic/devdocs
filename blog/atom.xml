@@ -1,0 +1,1556 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title><![CDATA[Shopware Developers]]></title>
+    <link href="https://developers.shopware.com/atom.xml" rel="self"/>
+    <link href="https://developers.shopware.com/"/>
+    <updated>2017-09-26T08:58:04+00:00</updated>
+    <id>https://developers.shopware.com/</id>
+        <generator uri="http://sculpin.io/">Sculpin</generator>
+        <entry>
+        <title type="html"><![CDATA[Ajax Panel]]></title>
+        <link href="https://developers.shopware.com/blog/2017/09/25/ajax-panel"/>
+        <updated>2017-09-25T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/09/25/ajax-panel</id>
+        <content type="html"><![CDATA[<p>In this blog post I want to present the concept of our ajax based panel system which we use in our B2B-Suite.
+In the B2B-Suite we had to develop a backend user interface inside the Shopware frontend.</p>
+
+<p>On a single page in a typical backend view you may find:</p>
+
+<ul>
+<li>list of entities</li>
+<li>form to enter new data</li>
+<li>list of related entities</li>
+<li>some statistics</li>
+</ul>
+
+<p>Serving all this data from a single controller action may already be hard, now imagine the sheer number of parameters you may
+have to exchange with this single action when you want to enable pagination, validation and searching on this single page,
+through this single action.</p>
+
+<p>This is pretty much the reason why stateless services and statefull frontends are an important topic in todays web development.
+And it is exactly the reason why we created the ajax panel. It provides us with the means to load local states from the
+server and create a rich ui.</p>
+
+<p>We evaluated different frameworks to achieve this target. AngularJS and Vue.JS were possible frameworks which allows
+two way data binding and statefull frontend access.</p>
+
+<p><img src="/blog/img/ajax-panel-abstract.svg" alt="image"></p>
+
+<p>The small controller actions don't respond with the full page dom tree anymore. Each controller is only responsible for a
+specific panel content.</p>
+
+<p>One ouf our targets was also to use most of the already existing dependencies instead of adding new frameworks just for
+the B2B-Suite. We use jQuery because it is a base dependency of Shopware 5.</p>
+
+<p>We decided to develop our own lightweight frontend framework on top of jQuery which allows asynchronous HTTP requests for our frontend.
+The main target of this framework is to execute asynchronous calls and render the response in a given and zoned DOM element by using an event.
+The behaviour is very similar to angular's <a href="https://github.com/angular/zone.js">zone.js</a>.</p>
+
+<h2>Code Example</h2>
+
+<p>The base structure of our ajax panel index action looks like this:</p>
+
+<pre><code class="language-html">&lt;div class=&quot;ajax-panel&quot; data-url=&quot;http://domain.tld/ajax-panel-controller&quot; data-id=&quot;example&quot;&gt;&lt;/div&gt;
+</code></pre>
+
+<p>On page load our jQuery ajax panel plugin will search for the class <code>ajax-panel</code> and use the data attribute <code>data-url</code>.
+If this attribute contains a valid url the jQuery plugin will perform an asynchronous http request on the attribute url.
+If the response is signed with a HTTP Status Code of 200 the response will be rendered back in the original zoned div with the data-id <code>example</code>.</p>
+
+<h2>Response Example</h2>
+
+<p>The ajax panel controller action responds with the content of the ajax panel element and moves the dom structure inside the given element.
+The response could be like:</p>
+
+<pre><code class="language-html">&lt;span&gt;Example Ajax Content&lt;/span&gt;
+</code></pre>
+
+<p>After the response is rendered in the parent Ajax Panel <code>div</code> the full dom structure will look like this:</p>
+
+<pre><code class="language-html">&lt;div class=&quot;ajax-panel&quot; data-url=&quot;http://domain.tld/ajax-panel-controller&quot; data-id=&quot;example&quot;&gt;
+
+    &lt;span&gt;Example Ajax Content&lt;/span&gt;
+
+&lt;/div&gt;
+</code></pre>
+
+<h2>Ajax Panel Plugins</h2>
+
+<p>After we build our first views we run in several problems. The biggest problem was, that we want to use jQuery in the
+response's rendered content. We decided to develop an own plugin loader for our ajax panel which loads automatically
+JavaScript plugins after the panel load. We throw many events for third party plugins that developers can use for their
+own plugin. Also the shopware default plugins can be registered in the ajax panel.</p>
+
+<p>To achieve this approach we added an optional <code>data-plugins</code> attribute which can contain multiple JavaScript plugins:</p>
+
+<pre><code class="language-html">&lt;div class=&quot;ajax-panel&quot; data-url=&quot;[..]&quot; data-id=&quot;[..]&quot; data-plugins=&quot;examplePlugin&quot;&gt;&lt;/div&gt;
+</code></pre>
+
+<h2>Basic Ajax Panel Plugin</h2>
+
+<p>Our JavaScript example plugin code looks like that:</p>
+
+<pre><code class="language-javascript">/**
+ * Remove all elements with triggerSelector Class
+ */
+$.plugin('b2bAjaxPanelExamplePlugin', {
+    defaults: {
+        triggerSelector: '.should--removed'
+    },
+
+    init: function () {
+        var me = this;
+        me._on(document, 'b2b--ajax-panel_loaded', $.proxy(me.addClasses, me));
+    },
+
+    addClasses: function (event, eventData) {
+        var $panel = $(eventData.panel);
+
+        $panel
+            .find(me.defaults.triggerSelector)
+            .remove();
+    },
+
+    destroy: function() {
+        var me = this;
+        me._destroy();
+    }
+});
+</code></pre>
+
+<h2>Dependencies</h2>
+
+<p>With the ajax panel we build a lightweight frontend framework which only depends on jQuery. Shopware delivers jQuery in the
+Responsive theme, so we don't need to require any addional component. Awesome, isn't it?</p>
+
+<h2>Conclusion</h2>
+
+<p>Our Ajax Panel is a complete flexible and lightweight framework with many possibilities and jQuery as a single dependency.
+The panel can be handled with simple data attributes and additional plugins allows to use JavaScript plugins.
+We use this technology in our B2B-Suite in each module very succesfully.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Mutation Testing]]></title>
+        <link href="https://developers.shopware.com/blog/2017/08/24/mutation-testing"/>
+        <updated>2017-08-24T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/08/24/mutation-testing</id>
+        <content type="html"><![CDATA[<div class="alert alert-info">
+Anyone who is just searching for the example source code and does not want to read the complete blog post, <a href="https://github.com/teiling88/mutation-testing">here it is.</a>
+</div>
+
+<p>In this blog post I want to present the concept of mutation testing and a simple example with <a href="https://github.com/humbug/humbug">humbug</a> for you. A few months ago, we have reached the 100 % code coverage goal in our actual project, the <a href="https://docs.enterprise.shopware.com/b2b-suite/">b2b-suite</a>. But what does this number stand for? Yes it <strong><em>only</em></strong> says you created enough unit-tests to execute every single line of code in your application. Nothing more. In the following sections I will create a simple class which is completely covered with unit tests. After that we will improve the tests and show how mutation testing can support us there.</p>
+
+<h2>Create an example class and unit tests</h2>
+
+<p>Let us have a look on this simple comparison example class:</p>
+
+<pre><code class="language-php">&lt;?php declare(strict_types=1);
+
+class Comparison
+{
+    public function isGreaterThan(int $x, int $y): bool
+    {
+        return $x &gt; $y;
+    }
+
+    public function isSmallerThan(int $x, int $y): bool
+    {
+        return $x &lt; $y;
+    }
+}
+</code></pre>
+
+<p>To create a unit-test to reach 100 % coverage is very simple. See the example below:</p>
+
+<pre><code class="language-php">&lt;?php declare(strict_types=1);
+
+class ComparisonTest extends PHPUnit\Framework\TestCase
+{
+    private $comparison;
+
+    public function setUp()
+    {
+        $this-&gt;comparison = new Comparison();
+    }
+
+    public function test_isGreaterThan()
+    {
+        self::assertTrue($this-&gt;comparison-&gt;isGreaterThan(5, 3));
+    }
+
+    public function test_isSmallerThan()
+    {
+        self::assertTrue($this-&gt;comparison-&gt;isSmallerThan(3, 5));
+    }
+}
+</code></pre>
+
+<p>The execution of these unit tests creates the following output:</p>
+
+<pre><code>OK (2 tests, 2 assertions)
+
+
+Code Coverage Report:   
+  2017-08-22 12:42:16   
+                        
+ Summary:               
+  Classes: 100.00% (1/1)
+  Methods: 100.00% (2/2)
+  Lines:   100.00% (2/2)
+
+Comparison
+  Methods: 100.00% (2/2)   Lines: 100.00% (2/2)
+
+</code></pre>
+
+<p>So we created a class with two methods which are covered by tests. We could think this class is bullet proof and every invalid change will be discovered from our test. But really? What if some developer adds a small equal sign to our methods? Our new <code>Comparison</code> class looks like this:</p>
+
+<pre><code class="language-php">&lt;?php declare(strict_types=1);
+
+class Comparison
+{
+    public function isGreaterThan(int $x, int $y): bool
+    {
+        return $x &gt;= $y;
+    }
+
+    public function isSmallerThan(int $x, int $y): bool
+    {
+        return $x &lt;= $y;
+    }
+}
+</code></pre>
+
+<p>And the result of our unit test is the same like above. Every test passed. But now false positive results are possible . If we use the method <code>isGreaterThan</code> with the parameters <code>$x = 5; $y = 5;</code> we will get true as return value instead of the supposed false value.</p>
+
+<p>So what happened? At the moment we only test the happy execution path of these methods and don't observe of the threshold values. For every developer it is obviously that 5 is greater than 3 and 3 is smaller than 5. So we create this kind of test. But how we have to improve our test to cover oll existing threshold values?</p>
+
+<p>First, we should test the nearest combination of parameters which causes an false return value. In our example methods we can easily use the equal number for <code>$x</code> and <code>$y</code>. After that we should test the farthest combination which causes a true return value. For this we can easily use the PHP constants <code>PHP_INT_MAX</code> and <code>PHP_INT_MIN</code>. The new created test can be seen below:</p>
+
+<pre><code class="language-php">&lt;?php declare(strict_types=1);
+
+class ComparisonTest extends PHPUnit\Framework\TestCase
+{
+    // ...
+
+    public function test_isGreaterThan()
+    {
+        self::assertTrue($this-&gt;comparison-&gt;isGreaterThan(5, 3));
+        self::assertFalse($this-&gt;comparison-&gt;isGreaterThan(4, 4));
+        self::assertTrue($this-&gt;comparison-&gt;isGreaterThan(PHP_INT_MAX, PHP_INT_MIN));
+    }
+
+    public function test_isSmallerThan()
+    {
+        self::assertTrue($this-&gt;comparison-&gt;isSmallerThan(3, 5));
+        self::assertFalse($this-&gt;comparison-&gt;isSmallerThan(4, 4));
+        self::assertTrue($this-&gt;comparison-&gt;isSmallerThan(PHP_INT_MIN, PHP_INT_MAX));
+    }
+}
+</code></pre>
+
+<h2>Mutation Testing</h2>
+
+<p>In this small example it is very easy to find the needed test range and threshold values. But how does it work in bigger applications with hundred of classes and thousand lines of code? I guess in the most cases only the happy path will be tested. So how can mutation testing help us to create better tests?</p>
+
+<p>The basic concept of mutation testing sounds very easy. You change comparison statements as an example from <code>===</code> to <code>!==</code> or changes return values of methods like <code>return true;</code> to <code>return false;</code>. This new versions of your application are called &quot;mutants&quot;. After your change you execute the test suite. If the suite fails your tests &quot;killed the mutant&quot;. This means your tests detected the wrong behaviour.</p>
+
+<p>Mutation testing introduces a new quality score the so-called &quot;Mutation Score Indicator&quot;. This score is the ratio of the number of Dead Mutants over all created Mutants. Usually this score is calculated like the code coverage in percent.</p>
+
+<p>In order to make this kind of testing automatically we can use <a href="https://github.com/humbug/humbug">humbug</a> for that. Humbug has a wide range of mutators like the described mutations above. A good overview can be found <a href="https://github.com/humbug/humbug#mutators">here</a>.</p>
+
+<p>So let us revert the new assertions and execute humbug for the first time. Humbug executes phpunit in the first place. After that it will create the mutants and execute the test suite again for every created mutant. To improve the execution time humbug only uses those test classes which cover the specific file and line on which the mutation was inserted.</p>
+
+<p>Humbug creates the following output:</p>
+
+<pre><code>Humbug has completed the initial test run successfully.
+Tests: 2 Line Coverage: 100.00%
+
+Humbug is analysing source files...
+
+Mutation Testing is commencing on 1 files...
+(.: killed, M: escaped, S: uncovered, E: fatal error, T: timed out)
+
+M.M.
+
+4 mutations were generated:
+       2 mutants were killed
+       0 mutants were not covered by tests
+       2 covered mutants were not detected
+       0 fatal errors were encountered
+       0 time outs were encountered
+
+Metrics:
+    Mutation Score Indicator (MSI): 50%
+    Mutation Code Coverage: 100%
+    Covered Code MSI: 50%
+</code></pre>
+
+<p>As we can see, humbug created 4 mutations, 2 mutants were killed and 2 mutants were not detected. So let us have a look at the generated mutations which are not detected:</p>
+
+<pre><code class="language-php">    public function isGreaterThan(int $x, int $y): bool
+    {
+        return $x &gt;= $y;
+    }
+    
+    public function isSmallerThan(int $x, int $y): bool
+    {
+        return $x &lt;= $y;
+    }    
+</code></pre>
+
+<p>Humbug automatically detects the same issues which we found above manually. If we add the new assertions which we already created above we should reach an Mutation Score Indicator of 100%. The created output stands below:</p>
+
+<pre><code>Humbug has completed the initial test run successfully.
+Tests: 2 Line Coverage: 100.00%
+
+Humbug is analysing source files...
+
+Mutation Testing is commencing on 1 files...
+(.: killed, M: escaped, S: uncovered, E: fatal error, T: timed out)
+
+....
+
+4 mutations were generated:
+       4 mutants were killed
+       0 mutants were not covered by tests
+       0 covered mutants were not detected
+       0 fatal errors were encountered
+       0 time outs were encountered
+
+Metrics:
+    Mutation Score Indicator (MSI): 100%
+    Mutation Code Coverage: 100%
+    Covered Code MSI: 100%
+</code></pre>
+
+<h2>Conclusion</h2>
+
+<p>Mutation Testing especially humbug is a powerful tool to rate the quality of your unit tests. It checks the hole test suite and gives you the safety that your created tests are useful. Our b2b-suite has at the moment a Mutation Score Indicator of 79%. So I think there is some space left for improvements ;-).</p>
+
+<p>If you are interested in the source code, it can be found <a href="https://github.com/teiling88/mutation-testing">here</a>.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Quick Tip: Custom fonts in the TinyMCE editor]]></title>
+        <link href="https://developers.shopware.com/blog/2017/08/09/quick-tip-custom-fonts-in-the-tinymce-editor"/>
+        <updated>2017-08-09T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/08/09/quick-tip-custom-fonts-in-the-tinymce-editor</id>
+        <content type="html"><![CDATA[<p><img src="/blog/img/custom-font-example.png" alt="Screenshot Storefront" /></p>
+
+<p><em>Custom font example in the Shopware storefront</em></p>
+
+<p>Lately we're getting more &amp; more requests on how to register / add custom fonts to the TinyMCE WYSIWYG editor in the Shopware administration. The editor is used throughout every Shopware module where you can insert HTML text, therefore it would be handy to have your own fonts in there.</p>
+
+<p>We've created an open source Shopware plugin called <code>SwagTinyMceCustomFont</code> which covers your needs. It allows you to integrate custom fonts from <a href="https://fonts.google.com/">Google Fonts</a>. The plugin automatically loads the font in the administration interface as well as in the storefront of your shop.</p>
+
+<p>You can find the plugin as well as the feature overview, installation guide and usage example on GitHub on: <a href="https://github.com/shopwareLabs/SwagTinyMceCustomFont">https://github.com/shopwareLabs/SwagTinyMceCustomFont</a>.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[SEO URLs in plugins]]></title>
+        <link href="https://developers.shopware.com/blog/2017/07/24/seo-urls-in-plugins"/>
+        <updated>2017-07-24T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/07/24/seo-urls-in-plugins</id>
+        <content type="html"><![CDATA[<p>In the world of eCommerce, SEO is a very important and recurrent topic.
+Thus, Shopware offers some tools to create a SEO friendly shop by default, including SEO friendly URLs.
+Make sure to have a look at the following SEO blog post, covering detailed information for the Shopware SEO engine: <a href="/blog/2015/08/11/the-shopware-seo-engine/">The Shopware SEO engine</a></p>
+
+<p>But for now, how do we actually create proper SEO URLs for our custom plugins?</p>
+
+<p>It must have been about a year ago when I stumbled across the same issue while reworking our premium plugin
+<a href="http://store.shopware.com/en/swagproductadvisor/shopping-advisor.html">Shopping advisor</a>.</p>
+
+<p>In this blog post, I want to provide a short tutorial on how to implement custom SEO URLs for your plugins.
+I'll also attach an example plugin for both Shopware 5.3 and 5.2 at the end of the tutorial.</p>
+
+<h2>Generating a SEO URL for a custom controller</h2>
+
+<p>For this short tutorial I will use a very basic plugin based on the new plugin system.</p>
+
+<h3>The scenario</h3>
+
+<p>As an example, I would like to create a glossary plugin.</p>
+
+<p>Using the glossary plugin, the shop owner should be able to create a description for a word.
+The plugin will provide an overview, showing all given words and their description.</p>
+
+<p>To store those, I created a table with the name <code>s_glossary</code> and the columns <code>id</code>, <code>word</code> and <code>description</code>.</p>
+
+<p>Later in this tutorial we also want to add a detail page, only showing a given word and its respective description.</p>
+
+<p>Let's assume the basic plugin structure contains a registered Frontend controller called <code>Glossary</code>, as well as the mentioned
+database table.</p>
+
+<h3>Let's get started</h3>
+
+<p>For the glossary overview, we would implement an <code>indexAction</code> in our <code>Glossary</code> controller to handle the overview.
+In order to call our action now, we'd open the following URL: <code>http://myShop.com/glossary/</code></p>
+
+<p>That URL looks smooth and SEO friendly already, doesn't it?</p>
+
+<p>What happens, if we want the glossary page to be internationally available?
+For your german customers, you would want the glossary to be available using <code>http://myShop.com/glossar/</code> as well.</p>
+
+<p>This can and should be done using SEO URLs.</p>
+
+<p>First of all, SEO URLs in Shopware are stored in the database table <code>s_core_rewrite_urls</code>.
+We could just create a new entry in that table during the installation process of the plugin.
+That would actually work for now.</p>
+
+<p>Yet, we want to create those SEO URLs depending on the 'refresh strategies' configuration.</p>
+
+<p>This configuration can be found in the backend: <code>Configuration &gt; Cache/performance &gt; Settings &gt; SEO &gt; Refresh strategy</code>.
+Our SEO URLs are generated in three different ways, being configurable in the backend.</p>
+
+<p>Available options are:</p>
+
+<ul>
+<li>Manually</li>
+<li>Via cronjob</li>
+<li>Live</li>
+</ul>
+
+<p>Again, refer to this blog post to get more detailed information on how those work: <a href="/blog/2015/08/11/the-shopware-seo-engine/">The Shopware SEO engine</a></p>
+
+<p>As each of the options mentioned above requires slightly different plugin logic, I'll explain them step by step.</p>
+
+<h3>Implement logic for 'Via cronjob'</h3>
+
+<div class="alert alert-danger" role="error">
+    The following code is only compatible with Shopware version 5.3 or higher.
+</div>
+
+<p>In <strong>Shopware 5.3</strong> we implemented a new event to SEO URL generation using the cronjob. <br />
+Everytime the cronjob <code>RefreshSeoIndex</code> is triggered, the method <code>onRefreshSeoIndex</code> in <a href="https://github.com/shopware/shopware/blob/5.3/engine/Shopware/Plugins/Default/Core/RebuildIndex/Bootstrap.php#L134">engine/Shopware/Plugins/Default/Core/RebuildIndex/Bootstrap.php</a> is called. <br />
+It now contains a new notify event called <code>Shopware_CronJob_RefreshSeoIndex_CreateRewriteTable</code>, which we will use to add our own SEO URL generation process.
+The event is called once for each shop after every other SEO URL (e.g. Products, Categories, ...) has been generated for this shop.</p>
+
+<pre><code>public static function getSubscribedEvents()
+{
+    return [
+        'Shopware_CronJob_RefreshSeoIndex_CreateRewriteTable' =&gt; 'createGlossaryRewriteTable'
+    ];
+}
+
+public function createGlossaryRewriteTable()
+{
+    /** @var \sRewriteTable $rewriteTableModule */
+    $rewriteTableModule = Shopware()-&gt;Container()-&gt;get('modules')-&gt;sRewriteTable();
+    
+    // Insert new rewrite URL for our custom controller
+    $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary', 'glossary/');
+}
+</code></pre>
+
+<p>In the example mentioned above, we would create a new rewrite URL for each shop.
+Of course, in this code we could and should now build our logic to create the translated rewrite URLs, e.g. <code>http://myShop.com/glossar</code>, which would be the german translation for it.</p>
+
+<h3>Implement logic for 'Live'</h3>
+
+<p>This option does <strong>not</strong> mean, that with each and every request the SEO URLs are re-generated.
+You can configure the refresh interval in the backend under <code>Configuration &gt; Cache/performance &gt; Settings &gt; SEO &gt; Refresh strategy</code>.</p>
+
+<p>Basically, whenever a request is sent to the shop and the response is about to be sent back, Shopware checks if it's time to re-generate the SEO URLs.
+In only that case (refresh strategy is 'live' AND the interval has passed), the method <code>sCreateRewriteTable</code> from our core module <a href="https://github.com/shopware/shopware/blob/5.3/engine/Shopware/Core/sRewriteTable.php#L220">sRewriteTable</a> is called.</p>
+
+<p>This method only generates the SEO URLs for the <strong>currently</strong> active shop.</p>
+
+<p>Therefore we could use an after hook on the method mentioned above.
+The code to actually insert our URL into the database is the same, so we can just re-use the same code with a different event.</p>
+
+<pre><code>public static function getSubscribedEvents()
+{
+    return [
+        'Shopware_CronJob_RefreshSeoIndex_CreateRewriteTable' =&gt; 'createGlossaryRewriteTable',
+        'sRewriteTable::sCreateRewriteTable::after' =&gt; 'createGlossaryRewriteTable',
+    ];
+}
+
+public function createGlossaryRewriteTable()
+{
+    /** @var \sRewriteTable $rewriteTableModule */
+    $rewriteTableModule = Shopware()-&gt;Container()-&gt;get('modules')-&gt;sRewriteTable();
+    $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary', 'glossary/');
+}
+</code></pre>
+
+<p>That's it for the live mode.</p>
+
+<h3>Implement logic for 'Manual'</h3>
+
+<div class="alert alert-danger" role="error">
+    The following code is only compatible with Shopware version 5.3 or higher.
+</div>
+
+<div class="is-float-right">
+    <img alt="Overview of the SEO URL concept" src="/blog/img/manual-seo-generation-win.png">
+    <div><em>The manual SEO URL generation window</em></div>
+</div>
+
+<p>This is where things become a little tricky.
+The manual URL generation is actually handled in ExtJs, generating the URLs in a batch mode.</p>
+
+<p>You can choose a batch size, which defines how many URLs should be generated with each request.</p>
+
+<p>We want to have our own progress bar at the bottom of the window now to generate our SEO URLs for the currently selected shop in batch mode.</p>
+
+<p>First of all we have to extend the file <a href="https://github.com/shopware/shopware/blob/5.3/themes/Backend/ExtJs/backend/performance/view/main/multi_request_tasks.js#L83">themes/Backend/ExtJs/backend/performance/view/main/multi_request_tasks.js</a>.
+We have to extend the property 'seo', which contains all progress bars, their snippets and, most important, the request URL to be called for each batch call to generate the SEO URLs.</p>
+
+<p>So, let's overwrite the ExtJs window.
+I won't go into detail on how to extend an ExtJs file. Refer to this guide about <a href="/developers-guide/backend-extension/#example-#1:-simple-extension">extending the backend</a> instead.</p>
+
+<p><em>Register new event:</em></p>
+
+<pre><code>public static function getSubscribedEvents()
+{
+    return [
+        ...
+        'Enlight_Controller_Action_PostDispatch_Backend_Performance' =&gt; 'loadPerformanceExtension'
+    ];
+}
+</code></pre>
+
+<p><br /></p>
+
+<p><em>The respective listener:</em></p>
+
+<pre><code>public function loadPerformanceExtension(\Enlight_Controller_ActionEventArgs $args)
+{
+    $subject = $args-&gt;getSubject();
+    $request = $subject-&gt;Request();
+
+    if ($request-&gt;getActionName() !== 'load') {
+        return;
+    }
+
+    $subject-&gt;View()-&gt;addTemplateDir(__DIR__ . '/Resources/views/');
+    $subject-&gt;View()-&gt;extendsTemplate('backend/performance/view/glossary.js');
+}
+</code></pre>
+
+<p>With Shopware 5.3 we implemented a new method called <code>addProgressBar</code> to <code>multi_request_tasks.js</code>.
+As the first parameter you have to provide an object containing an 'initialText' to be shown initially, a 'progressText' to be shown while generating the SEO URLs
+and a 'requestUrl' to be called with each step in the batch processing.
+The second parameter has to be a name for the new progress bar - we need this one later.
+The third parameter should be the target. Possible values are 'seo' and 'httpCache'. As we want to create a new progress bar to the SEO window, we'll use 'seo' here obviously.</p>
+
+<pre><code>//{block name=&quot;backend/performance/view/main/multi_request_tasks&quot; append}
+Ext.define('Shopware.apps.Performance.view.main.Glossary', {
+    override: 'Shopware.apps.Performance.view.main.MultiRequestTasks',
+
+    initComponent: function() {
+        this.addProgressBar(
+            {
+                initialText: 'Glossary URLs',
+                progressText: '[0] of [1] glossary URLs',
+                requestUrl: '{url controller=glossary action=generateSeoUrl}'
+            },
+            'glossary',
+            'seo'
+        );
+
+        this.callParent(arguments);
+    }
+});
+//{/block}
+</code></pre>
+
+<p>Once we refresh the backend and probably clear the cache, the SEO window should now contain our new progress bar.
+Now we need to create our backend controller and a <code>generateSeoUrlAction</code>.</p>
+
+<p>With each AJAX request for the batch processing, we'll get a shopId, an offset and a limit to properly generate our SEO URLs.
+We can ignore offset and the limit <strong>for the moment</strong>, since there is only a single URL to be generated for each shop.
+Just remember them for later in this tutorial.</p>
+
+<p><em>Controllers/Backend/Glossary.php</em></p>
+
+<pre><code>&lt;?php
+
+class Shopware_Controllers_Backend_Glossary extends Shopware_Controllers_Backend_ExtJs
+{
+    public function generateSeoUrlAction()
+    {
+        $shopId = $this-&gt;Request()-&gt;getParam('shopId');
+
+        /** @var Shopware_Components_SeoIndex $seoIndex */
+        $seoIndex = $this-&gt;container-&gt;get('SeoIndex');
+        $seoIndex-&gt;registerShop($shopId);
+
+        /** @var sRewriteTable $rewriteTableModule */
+        $rewriteTableModule = $this-&gt;container-&gt;get('modules')-&gt;RewriteTable();
+        $rewriteTableModule-&gt;baseSetup();
+        $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary', 'glossary/');
+
+        $this-&gt;View()-&gt;assign(['success' =&gt; true]);
+    }
+}
+</code></pre>
+
+<p>We're fetching the shopId, register a shop using the given shopId and then simply insert our rewrite URL again.</p>
+
+<p>Now there's one more thing missing.
+Once we select a shop in the backend SEO module, an AJAX call is sent to collect the total counts of URLs to be created with each progress bar.
+Our glossary URLs are not collected yet, so the module can't handle our glossary URLs properly yet.</p>
+
+<p>To collect the URLs, the <code>getCountAction</code> of the <a href="https://github.com/shopware/shopware/blob/5.3/engine/Shopware/Plugins/Default/Core/RebuildIndex/Controllers/Seo.php#L72">SEO controller</a> is called.
+Thankfully it provides a filter event <code>Shopware_Controllers_Seo_filterCounts</code> to properly add our own counts. For this we need to use the name we used earlier for the progress bar.</p>
+
+<pre><code>public static function getSubscribedEvents()
+{
+    return [
+        ...
+        'Shopware_Controllers_Seo_filterCounts' =&gt; 'addGlossaryCount'
+    ];
+}
+
+public function addGlossaryCount(\Enlight_Event_EventArgs $args)
+{
+    $counts = $args-&gt;getReturn();
+
+    $counts['glossary'] = 1;
+
+    return $counts;
+}
+</code></pre>
+
+<p>Currently, there's only a single URL to be generated for each shop, so we'll just return a static 1.</p>
+
+<p>So, now let's try it.
+If you've implemented everything properly, it should work perfectly now.</p>
+
+<h2>Custom parameters in SEO URL</h2>
+
+<p>Now we've implemented a simple SEO URL generation for our glossary plugin.
+The overview is now supported by SEO friendly URLs and we even generate those URLs in a proper way, depending on the given configuration.</p>
+
+<p>Now we want to have some kind of &quot;detail&quot; page for each word.
+When calling this detailed page, we only see a single word with its related description.</p>
+
+<p>For this we need a new action in our <strong>Frontend</strong> Controller, e.g. &quot;detailAction&quot;.
+We could call this action by using an URL like <code>http://myShop.com/glossary/detail</code>.
+In this case though, we would have to attach an ID for the word we want to show now.</p>
+
+<p>Sounds easy, let's just attach it to the URL:
+<code>http://myShop.com/glossary/detail?wordId=1</code></p>
+
+<p>This link would now display the word with the ID 1.
+Wouldn't it be cooler to have the word itself as a part of the URL now?
+E.g. you'd want to explain the word 'recursion', then the URL could look like this: <code>http://myShop.com/glossary/recursion</code></p>
+
+<p>Way better, isn't it?</p>
+
+<p>Now this already requires several changes in our code.
+First of all, every time we generate our SEO URLs, we have to iterate through all words in our database.</p>
+
+<pre><code>public function createGlossaryRewriteTable()
+{
+    /** @var \sRewriteTable $rewriteTableModule */
+    $rewriteTableModule = Shopware()-&gt;Container()-&gt;get('modules')-&gt;sRewriteTable();
+    $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary', 'glossary/');
+
+    /** @var QueryBuilder $dbalQueryBuilder */
+    $dbalQueryBuilder = $this-&gt;container-&gt;get('dbal_connection')-&gt;createQueryBuilder();
+
+    $words = $dbalQueryBuilder-&gt;select('glossary.id, glossary.word')
+        -&gt;from('s_glossary', 'glossary')
+        -&gt;execute()
+        -&gt;fetchAll(\PDO::FETCH_KEY_PAIR);
+
+    foreach ($words as $wordId =&gt; $word) {
+        $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary&amp;sAction=detail&amp;wordId=' . $wordId, 'glossary/' . $word);
+    }
+}
+</code></pre>
+
+<p>Also, we need to adjust the URL counts for the backend now.</p>
+
+<pre><code>public function addGlossaryCount(\Enlight_Event_EventArgs $args)
+{
+    $counts = $args-&gt;getReturn();
+
+    /** @var QueryBuilder $dbalQueryBuilder */
+    $dbalQueryBuilder = $this-&gt;container-&gt;get('dbal_connection')-&gt;createQueryBuilder();
+    $wordsCount = $dbalQueryBuilder-&gt;select('COUNT(glossary.id)')
+        -&gt;from('s_glossary', 'glossary')
+        -&gt;execute()
+        -&gt;fetchAll(\PDO::FETCH_COLUMN);
+
+    $counts['glossary'] = $wordsCount;
+
+    return $counts;
+}
+</code></pre>
+
+<p>Do you still remember the <code>offset</code> and the <code>limit</code> parameter from the batch processing for the SEO URLs?
+Now we do have to implement those, to only generate as many SEO URLs as configured in the batch process.</p>
+
+<pre><code>public function generateSeoUrlAction()
+{
+    ...
+
+    /** @var QueryBuilder $dbalQueryBuilder */
+    $dbalQueryBuilder = $this-&gt;container-&gt;get('dbal_connection')-&gt;createQueryBuilder();
+    $words = $dbalQueryBuilder-&gt;select('glossary.id, glossary.word')
+        -&gt;from('s_glossary', 'glossary')
+        -&gt;setMaxResults($limit)
+        -&gt;setFirstResult($offset)
+        -&gt;execute()
+        -&gt;fetchAll(\PDO::FETCH_KEY_PAIR);
+
+    foreach ($words as $wordId =&gt; $word) {
+        $rewriteTableModule-&gt;sInsertUrl('sViewport=glossary&amp;sAction=detail&amp;wordId=' . $wordId, 'glossary/' . $word);
+    }
+
+    $this-&gt;View()-&gt;assign(['success' =&gt; true]);
+}
+</code></pre>
+
+<h3>Add foreign parameters</h3>
+
+<p>While this already looks good, there's one more thing to do.
+Shopware needs to know our custom parameter &quot;<strong>wordId</strong>&quot; first.
+Otherwise our parameter would just get stripped and our SEO URL wouldn't work.</p>
+
+<p>The possible cases for parameters are handled in the <a href="https://github.com/shopware/shopware/blob/5.3/engine/Shopware/Components/Routing/Generators/RewriteGenerator.php#L166">RewriteGenerator</a>.
+It has a whole lot of cases, e.g. the parameter &quot;<strong>sArticle</strong>&quot; is only allowed when used with the <strong>detail</strong> controller.</p>
+
+<p>Thankfully, since Shopware 5.2, this method provides an event to add custom parameters.</p>
+
+<p>So, let's add the event and implement our custom parameter.</p>
+
+<pre><code>public static function getSubscribedEvents()
+{
+    return [
+        ...
+        'Shopware_Components_RewriteGenerator_FilterQuery' =&gt; 'filterParameterQuery'
+    ];
+}
+</code></pre>
+
+<pre><code>public function filterParameterQuery(\Enlight_Event_EventArgs $args)
+{
+    $orgQuery = $args-&gt;getReturn();
+    $query = $args-&gt;getQuery();
+
+    if ($query['controller'] === 'glossary' &amp;&amp; isset($query['wordId'])) {
+        $orgQuery['wordId'] = $query['wordId'];
+    }
+
+    return $orgQuery;
+}
+</code></pre>
+
+<p>So, what did I do here?
+First of all, Shopware doesn't know things like &quot;controllers&quot; or &quot;actions&quot; like that.
+Due to legacy reasons, Shopware still needs them to be handled as 'sViewport', which would be the controller, and 'sAction',
+which obviously represents action.
+That's what <code>$orgQuery</code> contains: The controller mapped to 'sViewport' and the action mapped to the array element 'sAction'.
+Since <code>$orgQuery</code> will be used for assembling our SEO URL later, we need to add our parameter to it.</p>
+
+<p>Meanwhile, <code>$query</code> contains the actual request parameters as we know them.</p>
+
+<p>We only need to add our custom parameter <code>wordId</code> if both the controller equals 'glossary' and the parameter itself is set.
+In that case, we add <code>wordId</code> to <code>$orgQuery</code> and return it afterwards.</p>
+
+<h2>Example plugin</h2>
+
+<p>You can find the example plugin for <strong>Shopware 5.3</strong> <a href="https://developers.shopware.com/exampleplugins/SeoExample.zip">here</a>.</p>
+
+<p>Just to make sure: <strong>This is not a fully functional plugin as it is only supposed to be an example.</strong>
+It will create the necessary plugin table <em>s_glossary</em> with a few example words.
+This plugin does not provide a backend module to work with and the frontend templates are very slim to show the basic functionality.</p>
+
+<h3>Shopware 5.2 plugin</h3>
+
+<p>We've also created an example plugin for <strong>Shopware 5.2</strong>, which can be found <a href="https://developers.shopware.com/exampleplugins/SeoExample52.zip">here</a>.</p>
+
+<p>There's several differences, e.g. the whole <em>Resources/views/backend</em> directory is different.
+Additional to that, the logic to count the available glossary URLs had to be changed, since the event we used above was implemented with 5.3.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Quick Tip: Shopping worlds without AJAX]]></title>
+        <link href="https://developers.shopware.com/blog/2017/06/26/quick-tip-shopping-worlds-without-ajax"/>
+        <updated>2017-06-26T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/06/26/quick-tip-shopping-worlds-without-ajax</id>
+        <content type="html"><![CDATA[<p>Today we're back with a short &amp; simple tip which allows you to load shopping worlds at any place in your store front without the need of loading them using AJAX. Do to so, please create your own frontend theme, if you haven't one in place already. Please refer to our <a href="https://developers.shopware.com/designers-guide/getting-started/#custom-themes">Templating Getting Started Guide</a> on how to create your own custom theme.</p>
+
+<p>After creating your own theme, please create a new JavaScript file in your <code>_public/src/js</code> directory &amp; place the following content into it:</p>
+
+<pre><code>window.StateManager
+    .removePlugin('.emotion--wrapper', 'swEmotionLoader')
+    .addPlugin('.emotion--wrapper:not(.emotion--non-ajax)', 'swEmotionLoader')
+    .addPlugin('.emotion--non-ajax *[data-emotion=&quot;true&quot;]', 'swEmotion');
+</code></pre>
+
+<p>We're removing the <code>swEmotionLoader</code> jQuery plugin which is the entry point for an AJAX shopping world. We're removing it because we have to modify the selector for the jQuery plugin. In the next line we're adding the same plugin but with a different selector. The selector allows us to add the class <code>emotion--non-ajax</code> to the element which should contain the shopping world later on. Last but not least, we're adding the jQuery plugin <code>swEmotion</code> to the plugin queue with our <code>emotion--non-ajax</code> class in place.</p>
+
+<p>After you've added the content to the JavaScript file, make sure you've registered the file in the <code>$javascript</code> array in your <code>Theme.php</code> file. If you need further information, please head over to our <a href="https://developers.shopware.com/designers-guide/css-and-js-files-usage/#add-javascript-files">CSS &amp; JS Files Usage Guide</a>.</p>
+
+<p>With these changes in place, you're now able to include shopping worlds literally at any place in your store front with the following code snippet:</p>
+
+<pre><code>&lt;div class=&quot;emotion--wrapper emotion--non-ajax&quot;&gt;
+    {action module=&quot;widgets&quot; controller=&quot;emotion&quot; action=&quot;index&quot; emotionId=&quot;7&quot;}
+&lt;/div&gt;
+</code></pre>
+
+<p>The argument <code>emotionId</code> in the widget call lets you choose what shopping world you would like to include. To get an overview of all available shopping worlds, please refer to the <code>s_core_emotion</code> database table.</p>
+
+<p>You may have to customize the styling of the shopping world, depending on what section of the store front you're using it.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Call for papers: Shopware Community Day 2017]]></title>
+        <link href="https://developers.shopware.com/blog/2017/03/14/call-for-papers-shopware-community-day-2017"/>
+        <updated>2017-03-14T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/03/14/call-for-papers-shopware-community-day-2017</id>
+        <content type="html"><![CDATA[<p><a href="https://cfp.shopware.com/"><img src="/blog/img/cfp-scd-2017.png" alt="image" /></a></p>
+
+<p>The <a href="https://scd.shopware.com/">Shopware Community Day</a> is on June 09, and we are looking forward to hear about your <a href="https://cfp.shopware.com/">idea for a talk</a>!</p>
+
+<p>Whatever you want to tell or show the shopware community, don't hesitate to submit your talk. Whatever it is, we will have a look into it.</p>
+
+<p>See you there! :)</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Currency formatting is easy, isn&#039;t it?]]></title>
+        <link href="https://developers.shopware.com/blog/2017/02/06/currency-formatting-is-easy-isnt-it"/>
+        <updated>2017-02-06T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/02/06/currency-formatting-is-easy-isnt-it</id>
+        <content type="html"><![CDATA[<p>I stumbled across a quite common problem in eCommerce projects I would like to cover in this blog post. According to a
+popular saying &quot;Money is what makes the world go round&quot; do we have to deal with currencies all the time especially in an application with heavy
+client side processing and templating. You're always using a formatter or helper methods in some way or another to deal with currencies. All
+of these solutions are not feeling right.</p>
+
+<h3>What's the problem anyways?</h3>
+
+<p>Let's take a look at one of those functions to get a feeling for the situation we're facing. One of the simplest ways
+is to have a function like this in place:</p>
+
+<pre><code>function formatCurrency (val) {
+    return val.toString().replace('.', ',') + ' €';
+}
+</code></pre>
+
+<p><em>Very simple example for a currency formatter function</em></p>
+
+<p>As you can tell already, it just covers one specific currency format. If we're dealing with prices in any other currency
+like USD for example, the helper fails miserably. So what we can do is extend the method to provide us with the ability
+to support multiple currencies?</p>
+
+<pre><code>function formatCurrency (val, currency) {
+    var currencyFormat;
+    
+    val = (Math.round(val * 100) / 100).toFixed(2);
+    
+    switch (currency) {
+        case 'USD':
+            currencyFormat = '$ 0.00';
+            val = currencyFormat.replace('0.00', val);
+            break;
+        case 'EUR':
+            currencyFormat = '0,00 €';
+            val = value.replace('.', ',');
+            val = currencyFormat.replace('0,00', val);
+            break;
+        default:
+            throw new Error('Unknown currency format');
+            break;
+    }
+    return val;
+}
+</code></pre>
+
+<p><em>More enhanced formatter helper - still with issues</em></p>
+
+<p>Now let us take a closer look on the example above. As you can see we're supporting two currency formats (EUR and USD) now,
+which is an enhancement compared to the very simple formatter we saw before but it is still far away from being perfect. Why you may asking?
+What happens when our customer wants a shop in the UK? We would have to implement another currency format
+in our helper. The solution is very limited regarding to the supported formats &amp; currencies. The code isn't tested in-depth
+and we want a solution which can cover all available currency formats. So let us sum up the con's / problems:</p>
+
+<p><strong>tl;dr</strong></p>
+
+<ul>
+<li>Dealing with currency formatting on your own is a pain and not recommended</li>
+<li>You have to support a bunch of formats and currencies (~ 270 currencies)</li>
+<li>Workarounds are necessary to get a somewhat working solution with limitations</li>
+<li>The code isn't tested in-depth in different browsers with all the available currency formats</li>
+</ul>
+
+<p>What you really want is a Native Browser API which is defined in an ECMAScript specification.</p>
+
+<h3><code>Number.toLocaleString</code> Native Method</h3>
+
+<p>In December 2012, ECMA International published the first edition of ECMA-402, better known as the <a href="http://www.ecma-international.org/ecma-402/1.0/">ECMA
+Internationalization API Specification 1.0</a>. This specification
+describes an API to bring long overdue localization methods to ECMAScript implementations.</p>
+
+<p>First I stumbled across <code>Number.toLocaleString()</code> in the <a href="https://developer.mozilla.org">Mozilla Developer Network</a>. It
+provides you with the ability to format numbers language sensitive.</p>
+
+<pre><code>var num = 3500.99;
+num.toLocaleString();
+</code></pre>
+
+<p><iframe src="https://jsfiddle.net/klarstil/rkttsyyn/embedded/result/" frameborder="0" width="100%" height="150px"></iframe></p>
+
+<p>If we're taking the example a little bit further and using the <code>language</code> &amp; <code>options</code> arguments, we can format the number
+as a currency and format the number the way we want.</p>
+
+<pre><code>var num = 3500.99;
+num.toLocaleString('de-DE', {
+   style: 'currency',
+   currency: 'EUR',
+   currencyDisplay: 'name',
+   useGrouping: true
+});
+</code></pre>
+
+<p><iframe src="https://jsfiddle.net/klarstil/mvL6eu7c/embedded/result/" frameborder="0" width="100%" height="150px"></iframe></p>
+
+<h3><code>Intl.NumberFormat</code> Native API</h3>
+
+<p>The <code>Intl.NumberFormat</code> object is a constructor for objects that enables language sensitive number formatting. This is a
+great solution for the day-by-day problem we're facing with currency formatting. Especially the <code>options</code> properties <code>currency</code> and
+<code>currencyDisplay</code> are very interesting for our use case. Before we're deep diving into the functionality and
+ability of the API I would like to take a closer look on the compatibility:</p>
+
+<p><iframe src="//caniuse.bitsofco.de/embed/index.html?feat=internationalization&amp;periods=future_1,current,past_1,past_2" frameborder="0" width="100%" height="390px"></iframe></p>
+
+<p>If your target browser doesn't support the International API specification, there's always a polyfill available on github.
+This is the case for the <code>Intl</code> Native API as well: <a href="https://github.com/andyearnshaw/Intl.js/">andyearnshaw/Intl.js/</a>.</p>
+
+<p>Let us take a closer look on how to use the Native API, shall we?</p>
+
+<pre><code>new Intl.NumberFormat([locales[, options]]);
+</code></pre>
+
+<p><em>Syntax for <code>Intl.NumberFormat</code></em></p>
+
+<ul>
+<li>
+<code>locales</code> - Optional argument. A string or an array with a <a href="https://tools.ietf.org/html/rfc5646">BCP 47</a> language tag.
+If you omit the parameter the browser's locale will be used.</li>
+<li>
+<code>options</code> - Optional argument. An object with the following properties:
+<ul>
+<li>
+<code>localeMatcher</code>, <code>style</code>, <code>currency</code>, <code>currencyDisplay</code>, <code>useGrouping</code>, <code>minimumIntegerDigits</code>, <code>minimumFractionDigits</code>, <code>maximumFractionDigits</code>, <code>minimumSignificantDigits</code> &amp; <code>maximumSignificantDigits</code>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>For our use case the 3 most important properties inside the <code>options</code> object are: <code>style</code>, <code>currency</code>, <code>currencyDisplay</code>.</p>
+
+<ul>
+<li>
+<code>style</code> - Defines the style to use for the number formatting. <code>decimal</code> for plain number formatting, <code>currency</code> for
+currency formatting &amp; <code>percent</code> for percent formatting.</li>
+<li>
+<code>currency</code> - The currency to use for currency formatting. Possible values are the <a href="http://www.iso.org/iso/home/standards/currency_codes.htm">ISO 4217</a>
+currency codes, such as &quot;USD&quot; for the US dollar, &quot;EUR&quot; for the euro or &quot;GBP&quot; for british pound.</li>
+<li>
+<code>currencyDisplay</code> - How to display the currency. Possible values are <code>symbol</code> for a localized symbol of the currency,
+<code>code</code> to use the ISO currency code or <code>name</code> to use for a localized string of the currency.</li>
+</ul>
+
+<pre><code>var number = 123456.789;
+
+// request a currency format
+console.log(new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(number));
+// 23.456,79 €
+
+// the Japanese yen doesn't use a minor unit
+console.log(new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(number));
+// ￥123,457
+</code></pre>
+
+<p><em>Examples on how to use <code>Intl.NumberFormat</code></em></p>
+
+<h4>Feature detection</h4>
+
+<p>It always comes in handy to know how to detect a certain feature you want to use.</p>
+
+<pre><code>var toLocaleStringSupportsOptions = function() {
+    return (typeof Intl == 'object' &amp;&amp; Intl &amp;&amp; typeof Intl.NumberFormat == 'function');
+};
+</code></pre>
+
+<h3>Performance matters</h3>
+
+<p>After playing around with both approaches, I noticed a quite heavy downside of <code>Number.toLocaleString()</code>. It became a
+performance bottleneck with huge data sets. To back up my assumption I've created a benchmark to compare both approaches
+and get a number about the operations per second.</p>
+
+<p>Before we dive into the statistics I would like to show off the two approaches we're comparing here:</p>
+
+<p><strong>Number.toLocaleString()</strong></p>
+
+<pre><code>var opts = { style: 'currency', currency: 'EUR' };
+12.49.toLocaleString('de-DE', opts);
+</code></pre>
+
+<p><strong>Intl.NumberFormat.format()</strong></p>
+
+<pre><code>var opts = { style: 'currency', currency: 'EUR' },
+    numberFormat = new Intl.NumberFormat('de-DE', opts);
+
+numberFormat.format(12.49)
+</code></pre>
+
+<p>Without further ado here are the results:</p>
+
+<p><img src="/blog/img/stats-currency-formatting.png" alt="Comparison Number.toLocaleString vs. Intl.NumberFormat.format()" /></p>
+
+<p>I highlighted the results of Chrome 58.0.2991, so we can take a closer look on the results.</p>
+
+<p><strong>Chrome 58.0.2991:</strong></p>
+
+<ul>
+<li>
+<code>Number.toLocaleString()</code> - 7,421 operations per second</li>
+<li>
+<code>Intl.NumberFormat.format()</code> - 1,659,696 operations per second</li>
+</ul>
+
+<p>The other results which I like to point out are the results from Mobile Safari. The benchmark was performed on an iPhone 7 Plus.</p>
+
+<p><strong>Mobile Safari 10.0:</strong></p>
+
+<ul>
+<li>
+<code>Number.toLocaleString()</code> - 12,683 operations per second</li>
+<li>
+<code>Intl.NumberFormat.format()</code> - 2,125,766 operations per second</li>
+</ul>
+
+<p>Hands down, Mobile Safari is by far the fastest browser regarding the <code>Intl</code> Native API which I found pretty impressive.
+On the other hand we tested Chrome Mobile on a Samsung Galaxy S7 with very poor results:</p>
+
+<p><strong>Chrome Mobile 55.0.1882</strong></p>
+
+<ul>
+<li>
+<code>Number.toLocaleString()</code> - 3,230 operations per second</li>
+<li>
+<code>Intl.NumberFormat.format()</code> - 265,300 operations per second</li>
+</ul>
+
+<h2>Summary</h2>
+
+<p>The Native API <code>Intl.NumberFormat</code> is perfect for heavy client side applications which are dealing with huge data sets
+and it is convenient to use. A helper function which uses the API can look like the following code snippet:</p>
+
+<pre><code>function NumberFormatter(locale, opts) {
+    var formatNumber,
+        defaults = {
+            style: 'currency',
+            currency: 'EUR'
+        };
+    opts = opts || {};
+    opts = Object.assign({}, defaults, opts);
+    
+    formatNumber = new Intl.NumberFormat(locale, opts);
+    return formatNumber.format;
+};
+
+var formatter = new NumberFormatter('de-DE');
+console.log(formatter(12.49));
+</code></pre>
+
+<p>The <code>Intl</code> API comes with a bunch of other methods for internationalization purposes such as language specific date
+formatting.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Shopware book for developers]]></title>
+        <link href="https://developers.shopware.com/blog/2017/01/26/shopware-book-for-developers"/>
+        <updated>2017-01-26T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2017/01/26/shopware-book-for-developers</id>
+        <content type="html"><![CDATA[<div class="alert alert-warning" role="alert">
+    The book is available in German only. The title and chapters have been changed for this blog article.
+</div>
+
+<p>For all Shopware developers, partners and contributors, there is now comprehensive guide for both working with and contributing to the further development of the software. In cooperation with Shopware’s developer, Daniel Nögel, the popular publishing house, Rheinwerk, recently published “Shopware: The Guide for Developers”. In interview, Daniel Nögel shares what motivated him to undertake this massive project, for whom the book is particularly suitable and where you can buy it.</p>
+
+<h2>How does it feel to finally hold a copy of your Shopware-bestseller in your hands?</h2>
+
+<p>Of course, you have to feel somewhat proud when you can see months of work come together in the finished product. Now I’m simply looking forward to the reader’s feedback. I hope the explanations and descriptions both illuminate aspects of working with Shopware and bring a true added-value to the readers.</p>
+
+<h2>Why does somebody need a Shopware Guide when extensive Shopware Wikis are already available as a resource?</h2>
+
+<p>I believe the Shopware Wikis and book complement one another very well: the book takes the reader more by the hand, step-by-step through development examples. Through several chapters, the book repeatedly addresses a larger project so that both the problems and solutions can be clearly demonstrated. On one hand, this motivates the reader because they can see the complete process of something like writing a plugin for Shopware; on the other, this makes topics more manageable, because the content is explained in a way that the developer can use in their everyday life. For this reason, I can tackle very advanced topics in the book because I’ve already built the foundations with the reader early on.</p>
+
+<p>The strength of the Wikis is that they go in-depth with individual topics. For instance, this makes it possible to present all possible template facets in a concise overview. Wikis are more about providing developers with relevant information on specific topics quickly and comprehensively.</p>
+
+<h2>For whom is this guide particularly suitable?</h2>
+
+<p>I actually had two target groups in mind when writing this book: beginners, who are taking their first steps with Shopware, and experienced users, who are interested in deepening their knowledge about specific topics. These include anything from the new plugin system to more advanced topics like storefront bundles or ElacticSearch. The timing of the book is highly appropriate, since so many innovations came out of Shopware within the past year.</p>
+
+<h2>In your opinion, which chapters/topics are particularly interesting for developers?</h2>
+
+<p>I think the chapter “Shopware behind the scenes” is particularly exciting for advanced developers, because we explain basic concepts that are used in everyday life, but not often examined with deeper thought. “Analyse and understand errors” is also helpful for many developers because, when it comes down to it, not everything goes as planned. In these cases, I think developers are grateful for tips on how to analyse and approach the problem on your own. In general, I think the book is beneficial for all developers because I don’t exclude any topics, and every developer has “blind spots” in certain areas.</p>
+
+<h2>While researching, did you encounter topics that were unfamiliar to you?</h2>
+
+<p>Due to the fact that I’ve been holding developer trainings for a long time, new topics weren’t really an obstacle for me. However, I can admit to being not so talented when it comes to implementing beautiful designs – I’m more inclined to sharing insights to techniques “behind the scenes”. Here I was relieved to have a few colleagues who are far more experienced with the frontend area. And of course, there were a few times when I turned to my colleagues for advice when I wasn’t sure of the best way to present a set of information.</p>
+
+<h2>How much previous experience is required to understand the book?</h2>
+
+<p>Ideally, the reader should have basic programming experience. After all, the book is a guide for working with Shopware and not a general introduction to programming. PHP, MySQL and JavaScript are the most important technologies behind Shopware – if you’re familiar with these, you won’t encounter any problems with the book’s content. However, readers who have experience with other programming languages such as Java or Python should also find the book approachable.</p>
+
+<h2>What is the best way for people to give feedback on the book and discuss the included coding examples?</h2>
+
+<p>We set up a separate area in the Shopware Forum, where readers are encouraged to provide feedback: <a href="https://forum.shopware.com/categories/shopware-das-handbuch-fuer-entwickler">https://forum.shopware.com/categories/shopware-das-handbuch-fuer-entwickler</a></p>
+
+<p>If an example is contrary to what was expected or does not function as planned, the Shopware Forum is the best starting point for addressing any problems. I’m always open to praise and/or criticism – you can best find here on Twitter: <a href="https://twitter.com/danielnoegel">https://twitter.com/danielnoegel</a></p>
+
+<p>The book is available in specialty shops, popular marketplaces as well as <a href="https://www.rheinwerk-verlag.de/shopware_4185/">https://www.rheinwerk-verlag.de/shopware_4185/</a></p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[New cart bundle concept]]></title>
+        <link href="https://developers.shopware.com/blog/2016/12/09/new-cart-bundle-concept"/>
+        <updated>2016-12-09T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2016/12/09/new-cart-bundle-concept</id>
+        <content type="html"><![CDATA[<p>Since the last Community Day, we've received several questions about Shopware's new shopping cart:</p>
+
+<ul>
+<li>
+<em>How far are you with the development</em>
+</li>
+<li>
+<em>Which new features come with the new shopping cart?</em>
+</li>
+</ul>
+
+<p>At the Community Day, we also announced that we are striving for open development in the refactoring process in order to get as much feedback as possible and to be able to work more closely with other developers and partners. We want to realize this now by sharing the first concept of the new shopping cart. You can see the development process on <a href="https://github.com/shopware/shopware-cart-poc">Github</a>, where we created a new repository which allows the Community to create pull requests and issues. The new repository contains a new bundle in <code>/engine/Shopware/Bundle/CartBundle</code>, which contains a first proof of concept for a new cart process. This first concept can change steadily due to growing requirements and that refactoring will be an ongoing process. The first features we implemented are the following:</p>
+
+<ul>
+<li>Add, delete and change quantity of product line items</li>
+<li>Add and delete percentage-based vouchers</li>
+<li>First concept for partial delivery</li>
+</ul>
+
+<p>There's currently no storefront integration. A view layer will follow after all calculation processes are tested. For that reason, the classes are only used inside unit tests. From a technical perspective, the cart already contains the following concepts/features:</p>
+
+<ul>
+<li>Percentage price calculation</li>
+<li>Gross and net price calculation</li>
+<li>Proportional tax calculation</li>
+<li>Exchangeable gateway for product prices and delivery information</li>
+<li>First proof of concept for a partial delivery to different addresses and delivery dates</li>
+</ul>
+
+<p>If you want to get more information about the technical concept and current implementation, take a look at our <a href="/developers-guide/concept-cart-bundle/" target="_blank">new developers guide article</a>. This article is created to document the current state of the implementation and will contain more content regarding progressive refactoring. Due to the complexity and importance of the shopping cart inside Shopware, this will be a long-term project. Short-term integration into the core product is therefore not to be expected.</p>
+]]></content>
+    </entry>
+        <entry>
+        <title type="html"><![CDATA[Large Scale Plugin Architecture]]></title>
+        <link href="https://developers.shopware.com/blog/2016/12/05/large-scale-plugin-architecture"/>
+        <updated>2016-12-05T00:00:00+00:00</updated>
+        <id>https://developers.shopware.com/blog/2016/12/05/large-scale-plugin-architecture</id>
+        <content type="html"><![CDATA[<p>Last time I published a post where I was talking about a build system for a new project we were undertaking. After getting a basic project structure and development environment set up we were tasked to create a macro architecture for our software.</p>
+
+<p>In this first part I want to show you how we derived a <em>macroscopic layer structure from technical requirements</em>. The domain structure, and even the service structure will be part of later posts.</p>
+
+<h3>Requirements</h3>
+
+<p>Let me introduce you to the basic requirements we were tasked with:</p>
+
+<blockquote>
+<p>&quot;In the following months, and possibly years you will have to create a large scale extension to shopware that exposes a extensible Development Framework, a REST-API, and a end user frontend. Besides creating new entities, simple data containers and dynamic workflows you will furthermore be tasked with problems that are commonly considered <em>hard to implement in Shopware</em>. Although you can initially require a future Shopware release, you might have to support more then one version at a time after release. Oh, and foreign developers might bind to your interfaces, so please create something stable that can still be changed after release. We call it B2B Suite.&quot;</p>
+</blockquote>
+
+<p>Woah!! That is a little much.... Maybe... we should start like I started, and break this down into it's various components.</p>
+
+<p>What are the technical components that are required?</p>
+
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Targeted Actor</th>
+<th>Code stability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REST-API</td>
+<td>System Integrator</td>
+<td>very stable</td>
+</tr>
+<tr>
+<td>Developer-Framework</td>
+<td>Other developers</td>
+<td>stable</td>
+</tr>
+<tr>
+<td>Web-Frontend</td>
+<td>End users</td>
+<td>open</td>
+</tr>
+</tbody>
+</table>
+
+<p>And how complex might the tasks get?</p>
+
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Targeted</th>
+<th>Expectation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple Entity management</td>
+<td>Is a simple use case with an easy implementation. The only caveats here is extensibility.</td>
+<td>CRUD</td>
+</tr>
+<tr>
+<td>Complex Workflows</td>
+<td>Unknown complex stuff, might not have common solutions.</td>
+<td>The real fun :)</td>
+</tr>
+<tr>
+<td>Complex due to Shopware</td>
+<td>Should be a simple use case, but is not easily implemented.</td>
+<td>Uggly code</td>
+</tr>
+</tbody>
+</table>
+
+<p>So now we have different required parts, learned a little bit about the actors using these parts. And we also gained some insight as to how complex these parts might get.</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/reason-to-change.svg" /></p>
+
+<p>So the plugin itself has ties to at least these entities. Each either preventing change from or proclaiming change to the plugins structure. We need to create an architecture that takes this into account. Separating good from bad change and necessary from unnecessary change. In order to accomplish this I want to show you a iterative approach to layer design.</p>
+
+<h3>Iterative Architecture</h3>
+
+<p>We need to gain greater insight into the <strong>The Plugin</strong> thingy. In this chapter I want to define the macro structure of the technical layers based on the components and actor classes defined above. The design goal is to split the responsibilities to change or be static in a meaningful way.</p>
+
+<p>I am a big proponent of <strong>Domain Driven Design</strong> and even more of the ideas behind it. I truely believe that basically anything can be abstracted away apart from the core domain of a application. Using arrays or yaml as config? Who cares! Making changes through REST or CLI. Doesn't matter. Triggering a new order without a shipping address? Deny!</p>
+
+<p>So I believe it is a quite natural starting point to define a domain core precisely handling our use cases / user stories / features / whatever. This core of course has to communicate with the outside world. But does not come with communications means itself. So lets start by drawing a domain core:</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-1.svg" /></p>
+
+<p>The nice thing about this is that we could start right now constructing business use cases agnostic to I/O transport mechanisms. I usually tend to start working right now and create a few example cases, that are exclusively called through a automated test suite. The UI lives outside of the core so lets add it:</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-2.svg" /></p>
+
+<p>Most use cases will have to interact with Shopware which is therefore at least on the other side of the core:</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-3.svg" /></p>
+
+<p>Notice the direction the arrows point, the frontend and REST-API depend on the domain core. That means change for both frontends is inevitable when the core changes. Good! A Change in use case should require a change in I/O. But there is this arrow between Shopware and the domain core. That can not be good.... Obviously Shopware does not depend on our plugin, but does our plugin have to depend on Shopware?</p>
+
+<hr />
+
+<h4>Excurse: The <strong>D</strong> in SOLID: Dependency Inversion Principle</h4>
+
+<p>Polymorphism really is the key to get this right. Instead of depending on the whole and direct implementation of Shopware, we depend on an interface our domain owns that provides just the data access wrapped into our own business objects services.</p>
+
+<p>Let's assume this is our class:</p>
+
+<pre><code class="language-php">class LoginPerformerService {
+    public function performLogin(string $email, bool $overwriteExisting = false): My\Identity
+    {
+        if(!$overwriteExisting &amp;&amp; Shopware()-&gt;Admin()-&gt;sCheckUser()) {
+            throw new \DomainException('Would have to overwrite existing identity')
+        }
+
+        try {
+            $identity = $this-&gt;identityRepository
+                    -&gt;fetchIdentityByEmail($email);
+        } catch (My\NotFoundException()) {
+             $identity = new My\GuestIdentity();
+        }
+
+        if(!$identity-&gt;isPersistent()) {
+            return $identity;
+        }
+
+        Shopware()-&gt;Front()-&gt;Request()-&gt;setParam('password', $identity-&gt;getPassword());
+        Shopware()-&gt;Front()-&gt;Request()-&gt;setParam('email', $identity-&gt;getEmail());
+
+        Shopware()-&gt;Admin()-&gt;sLogin();
+
+        Shopware()-&gt;Session()-&gt;offsetSet('my-identity', serialize($identity));
+
+        return $identity;
+    }
+}
+</code></pre>
+
+<p>You see there is a mixed bag of responsibilities from Shopware and from our own code. You might even think this code is reasonably clean, and be correct with it, unless we try to evaluate which lines actually belong to us and which don't. Let me just replace everything that belongs to Shopware with <code>_XX_</code>.</p>
+
+<pre><code class="language-php">class LoginPerformerService {
+    public function performLogin(string $email, bool $overwriteExisting = false): My\Identity
+    {
+        if(!$overwriteExisting &amp;&amp; _XX_) {
+            throw new \DomainException('Would have to overwrite existing identity')
+        }
+
+        try {
+            $identity = $this-&gt;identityRepository
+                    -&gt;fetchIdentityByEmail($email);
+        } catch (My\NotFoundException()) {
+             $identity = new My\GuestIdentity();
+        }
+
+        if(!$identity-&gt;isPersistent()) {
+            return $identity;
+        }
+
+        _XX_
+        _XX_
+
+        _XX_
+
+        _XX_
+
+        return $identity;
+    }
+}
+</code></pre>
+
+<p>Turns out five of our statements actually belong to Shopware, so now we can replace them with method calls.</p>
+
+<pre><code class="language-php">class LoginPerformerService {
+    public function performLogin(string $email, bool $overwriteExisting = false): My\Identity
+    {
+        if(!$overwriteExisting &amp;&amp; $this-&gt;shopLogin-&gt;isLoggedIn()) {
+            throw new \DomainException('Would have to overwrite existing identity')
+        }
+
+        try {
+            $identity = $this-&gt;identityRepository
+                    -&gt;fetchIdentityByEmail($email);
+        } catch (My\NotFoundException()) {
+             $identity = new My\GuestIdentity();
+        }
+
+        if(!$identity-&gt;isPersistent()) {
+            return $identity;
+        }
+
+        $this-&gt;shopLogin-&gt;storeLoginOf($identity);
+
+        return $identity;
+    }
+}
+</code></pre>
+
+<p>Create an interface</p>
+
+<pre><code class="language-php">interface ShopLogin {
+    public function isLoggedIn(): bool;
+    public function storeLoginOf(Identity $identity);
+}
+</code></pre>
+
+<p>And implement the interface</p>
+
+<pre><code class="language-php">class ShopwareLogin {
+   public function isLoggedIn()
+   {
+        return Shopware()-&gt;Admin()-&gt;sCheckUser();
+   }
+
+   public function storeLoginOf(Identity $identity)
+   {
+        Shopware()-&gt;Front()-&gt;Request()-&gt;setParam('password', $identity-&gt;getPassword());
+        Shopware()-&gt;Front()-&gt;Request()-&gt;setParam('email', $identity-&gt;getEmail());
+
+        Shopware()-&gt;Admin()-&gt;sLogin();
+
+        Shopware()-&gt;Session()-&gt;offsetSet('my-identity', serialize($identity));
+   }
+}
+
+</code></pre>
+
+<p>The obvious trade off is now instead of one class you have to maintain and remember three different classes but there is also a key benefit to this:</p>
+
+<p><strong>Reversed Ownership</strong> From the perspective of the service there is no Shopware, just an interface to call. Your main Domain is secured and our plugin does no longer depend on Shopware, but basically any possible login implementation. This lesson in code also applies to software architecture as a whole. We can reverse the ownership of whole layers by adding one level of indirection.</p>
+
+<hr />
+
+<p>We call it Bridge! A indirection layer between the domain core and Shopware :)</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-4.svg" /></p>
+
+<p>On paper this may look like a good enough architecture. But Shopware is not just a collection of models and services, but also a really powerful frontend framework, http abstraction layer, template engine and so on. And we should harness this power. So we need to integrate the Frontend layers into our application. The most naive approach first:</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-5.svg" /></p>
+
+<p>Like the initial domain core design the frontends now depend directly on Shopware itself. Although I called this approach naive, it might actually be the correct one for our use case. If the frontends actually only provide a controller and a view component and just use the domain core as the model this might be a good solution. Here we have to think really careful! Where do we want to start mixing HTTP with our application? Will this mix be Shopware + HTTP, or just HTTP and then Shopware?</p>
+
+<p>Depending on the domain of our plugin several other solutions are possible. For example a bridge for both transport layers:</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-6.svg" /></p>
+
+<p>Or even just one?</p>
+
+<p><img src="/blog/img/large-scale-plugin-architecture/plugin-layer-architecture-7.svg" /></p>
+
+<p>Maybe... Lets's take a look how this works against our actors:</p>
+
+<h3>Reason to change</h3>
+
+<p>So what actor can introduce change into which component?</p>
+
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Shopware</th>
+<th>End User</th>
+<th>Foreign Developer</th>
+<th>System Integrator</th>
+<th>Requirement Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REST-Frontend</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr>
+<td>REST-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Store Frontend</td>
+<td>-</td>
+<td>X</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Front-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Domain-Core</td>
+<td>-</td>
+<td>X</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Shop-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+</tbody>
+</table>
+
+<p>And to what components should these actor bind to?</p>
+
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Shopware</th>
+<th>End User</th>
+<th>Foreign Developer</th>
+<th>System Integrator</th>
+<th>Requirement Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REST-Frontend</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr>
+<td>REST-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Store Frontend</td>
+<td>-</td>
+<td>X</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Front-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Domain-Core</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+<td>-</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Shop-Bridge</td>
+<td>X</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>X</td>
+</tr>
+</tbody>
+</table>
+
+<p>Congrats! We have an architecture that <strong>channels change</strong> to different layers and provides reasonably stable ready to use interfaces.</p>
+
+<h3>Conclusion</h3>
+
+<p>You might have noticed that up until now we completely omitted any use cases for the plugin. I will return with these in the next installment of this post.</p>
+
+<p>This approach moves Shopware behind the same curtain as every other service. It is as easy to import Shopware into the plugin as it is to import any other framework.</p>
+
+<p>One could argue that singling out reasons to change is over engineering. And depending on the size of the plugin one could win an argument against me. But If you are planing on writing a sufficient amount of code, you should think about your dependencies, not just in terms of code but also of real world actors to create a structure sufficient for you.</p>
+
+<p>The main concern one could therefore have is that an architecture like that encourages the <em><a href="https://en.wikipedia.org/wiki/Not_invented_here">Not invented here syndrome</a></em>, which certainly can be the case. The bridges encourage cherry picking, and it suddenly becomes a conscious and meaningful decision if you want to reuse something provided by Shopware or are more comfortable with deploying your own solution. But this simply is how modern development works. And opening a topic for discussion should hardly be a problem.</p>
+
+<p>I usually always recommend the idea over the implementation. But after developing in this structure for the better part of the past year I see a great deal of long time potential in this type of technical architecture.</p>
+]]></content>
+    </entry>
+    </feed>
